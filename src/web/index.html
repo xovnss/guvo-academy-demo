@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Academia de simulaciones con IA</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="top">
+      <h1>Academia de simulaciones con IA</h1>
+      <p class="muted">Practica conversaciones difíciles con un interlocutor simulado, recibe coaching en vivo y obtén un certificado verificable. <strong>Demo con personas y empresas ficticias.</strong></p>
+    </header>
+
+    <section id="screen-start" class="card">
+      <h2>Elige un escenario</h2>
+      <label class="field">Tu nombre (aparecerá en el certificado)
+        <input id="name" type="text" maxlength="60" placeholder="Ej. Ana Pérez" autocomplete="name">
+      </label>
+      <div id="scenarios" class="grid"></div>
+    </section>
+
+    <section id="screen-brief" class="card" hidden>
+      <h2 id="brief-title"></h2>
+      <p id="brief-context"></p>
+      <p><strong>Objetivo:</strong> <span id="brief-objective"></span></p>
+      <h3>Consejos previos</h3>
+      <ul id="brief-tips"></ul>
+      <p class="muted">En esta demo el interlocutor responde con reglas. Con una API key, responde de forma dinámica y única.</p>
+      <button id="btn-begin" class="primary">Empezar simulación</button>
+    </section>
+
+    <section id="screen-sim" hidden>
+      <div class="sim">
+        <div class="card chat">
+          <div id="log" aria-live="polite"></div>
+          <div id="suggestions" class="chips"></div>
+          <form id="form" autocomplete="off">
+            <input id="input" type="text" maxlength="500" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta" required>
+            <button type="submit" class="primary" id="send">Enviar</button>
+          </form>
+          <button id="btn-finish" class="link" type="button">Terminar y ver resultado</button>
+        </div>
+        <aside class="card side">
+          <div class="meter-head"><span id="meter-emoji">🙂</span><div><div id="meter-name" class="muted small"></div><strong id="meter-label"></strong> <span id="meter-pct"></span></div></div>
+          <div class="bar"><div id="meter-fill"></div></div>
+          <p id="meter-trend" class="muted small"></p>
+          <h3>Criterios en vivo</h3>
+          <ul id="criteria" class="criteria"></ul>
+          <h3>Pista IA</h3>
+          <p id="hint" class="hint muted">Valida cómo se siente antes de proponer una solución.</p>
+          <p id="turns" class="muted small"></p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="screen-result" class="card" hidden>
+      <h2>Resultado</h2>
+      <p class="score"><span id="score"></span><small>/100</small> <span id="passed" class="badge"></span></p>
+      <p class="muted" id="xp"></p>
+      <h3>Por criterio</h3>
+      <ul id="result-criteria" class="criteria"></ul>
+      <p><strong>Superpoder:</strong> <span id="superpower"></span> · <strong>Área de mejora:</strong> <span id="improvement"></span></p>
+      <h3>Momentos clave</h3>
+      <ul id="highlights" class="highlights"></ul>
+      <h3>Próximos pasos</h3>
+      <ul id="next-steps"></ul>
+      <div id="cert" hidden>
+        <h3>Tu certificado</h3>
+        <img id="cert-img" alt="Certificado de finalización" width="600">
+        <p><a id="cert-link" target="_blank" rel="noopener">Abrir certificado</a> · <a id="verify-link" href="#">Comprobar autenticidad</a> <span id="verify-result" class="muted"></span></p>
+      </div>
+      <button id="btn-again" class="primary">Practicar otro escenario</button>
+    </section>
+    <p id="error" class="error" role="alert" hidden></p>
+  </main>
+</body>
+</html>

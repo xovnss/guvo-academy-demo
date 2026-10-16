@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+
+# Nunca subir credenciales
+.env
+.env.*
+!.env.example
+
+.DS_Store
