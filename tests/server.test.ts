@@ -141,3 +141,13 @@ describe("sesiones", () => {
     await first;
   });
 });
+
+describe("IP del cliente detrás de un proxy", () => {
+  it("usa la última IP de X-Forwarded-For solo si se confía en el proxy", async () => {
+    const { clientIp } = await import("../src/server.ts");
+    const req = { headers: { "x-forwarded-for": "6.6.6.6, 1.2.3.4" }, socket: { remoteAddress: "10.0.0.1" } } as any;
+    assert.equal(clientIp(req, true), "1.2.3.4");
+    assert.equal(clientIp(req, false), "10.0.0.1");
+    assert.equal(clientIp({ headers: {}, socket: { remoteAddress: "10.0.0.1" } } as any, true), "10.0.0.1");
+  });
+});

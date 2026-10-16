@@ -22,7 +22,7 @@ const academy = new Academy({
 
 const port = Number(env.PORT ?? 3000);
 const host = env.HOST ?? "127.0.0.1";
-createApp({ academy, publicUrl: env.PUBLIC_URL }).listen(port, host, () => {
+createApp({ academy, publicUrl: env.PUBLIC_URL, trustProxy: env.TRUST_PROXY === "1" }).listen(port, host, () => {
   console.log(`Academia lista en http://${host}:${port}`);
   console.log(`  Evaluación: ${chat ? `LLM (${chat.model}) con respaldo por reglas` : "reglas en español (sin API key)"}`);
 });

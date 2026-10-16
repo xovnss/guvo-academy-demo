@@ -52,6 +52,17 @@ export interface ServerOptions {
   webDir?: URL;
   /** URL pública (p. ej. https://mi-demo.vercel.app); aparece en el certificado como enlace de verificación. */
   publicUrl?: string;
+  /** Detrás de un proxy (Render, Fly…) la IP real viene al final de X-Forwarded-For; sin esto todos compartirían un solo límite. */
+  trustProxy?: boolean;
+}
+
+export function clientIp(req: IncomingMessage, trustProxy: boolean): string {
+  if (trustProxy) {
+    const forwarded = req.headers["x-forwarded-for"];
+    const last = (Array.isArray(forwarded) ? forwarded.join(",") : forwarded ?? "").split(",").at(-1)?.trim();
+    if (last) return last;
+  }
+  return req.socket.remoteAddress ?? "unknown";
 }
 
 function send(res: ServerResponse, status: number, body: string | Buffer, type: string) {
@@ -87,7 +98,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   }
 }
 
-export function createApp({ academy, rateLimit, publicUrl, webDir = new URL("./web/", import.meta.url) }: ServerOptions): Server {
+export function createApp({ academy, rateLimit, publicUrl, trustProxy = false, webDir = new URL("./web/", import.meta.url) }: ServerOptions): Server {
   const limiter = new RateLimiter(rateLimit?.max ?? 40, rateLimit?.windowMs ?? 60_000);
 
   async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -95,7 +106,7 @@ export function createApp({ academy, rateLimit, publicUrl, webDir = new URL("./w
     const path = url.pathname;
     const method = req.method ?? "GET";
 
-    if (path.startsWith("/api/") && !limiter.allow(req.socket.remoteAddress ?? "unknown")) {
+    if (path.startsWith("/api/") && !limiter.allow(clientIp(req, trustProxy))) {
       throw new AppError(429, "Demasiadas peticiones. Intenta de nuevo en un minuto.");
     }
 

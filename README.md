@@ -56,10 +56,14 @@ El flujo de cada mensaje: **analizar → sanear → mover el termómetro → res
 - **Certificados sin base de datos.** `base64url(payload).base64url(HMAC)`; cambiar una letra invalida la firma, comparación en tiempo constante, nombre normalizado y SVG con todo el texto escapado. Sin `CERT_SECRET` se genera uno aleatorio (no hay clave por defecto adivinable).
 - **Servidor endurecido.** CSP estricta, `nosniff`, cuerpo ≤ 4 KB, mensajes ≤ 500 caracteres, solo JSON, límite por IP, sesiones con TTL y tope, un mensaje a la vez por sesión, escucha solo en `127.0.0.1`. La interfaz usa `textContent`, nunca `innerHTML`.
 
+## Publicarlo en línea
+
+El servidor guarda las sesiones en memoria, así que necesita un host que mantenga un proceso Node vivo (Render, Fly, Railway), no funciones serverless. Con Render: **New → Blueprint**, elige este repositorio y listo; `render.yaml` ya trae la configuración, genera un `CERT_SECRET` propio y activa `TRUST_PROXY` para que el límite de peticiones sea por visitante. Sin `OPENROUTER_API_KEY` corre con el modo por reglas, sin costo.
+
 ## Pruebas y evals
 
 ```bash
-npm test         # 64 pruebas
+npm test         # 65 pruebas
 npm run eval     # evals con casos etiquetados y conversaciones de referencia
 npm run typecheck
 ```
