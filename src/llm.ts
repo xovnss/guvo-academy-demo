@@ -9,27 +9,47 @@ interface ChatOptions {
   apiKey: string;
   model?: string;
   baseUrl?: string;
+  /** Cabeceras extra (OpenRouter usa HTTP-Referer y X-Title). */
+  headers?: Record<string, string>;
+  /** Tope de llamadas por día (UTC). Al agotarse, `complete` lanza y los adaptadores caen a las reglas. */
+  dailyLimit?: number;
+  clock?: () => Date;
   fetchImpl?: typeof fetch;
 }
 
-/** Cliente mínimo de chat/completions de OpenAI (sin SDK). */
+/** Cliente mínimo de chat/completions compatible con OpenAI y OpenRouter (sin SDK). */
 export class OpenAIChat {
   readonly model: string;
   #apiKey: string;
   #baseUrl: string;
   #fetch: typeof fetch;
+  #headers: Record<string, string>;
+  #dailyLimit: number;
+  #clock: () => Date;
+  #day = "";
+  #used = 0;
 
   constructor(options: ChatOptions) {
     this.model = options.model ?? "gpt-4o-mini";
     this.#apiKey = options.apiKey;
     this.#baseUrl = (options.baseUrl ?? "https://api.openai.com/v1").replace(/\/+$/, "");
     this.#fetch = options.fetchImpl ?? fetch;
+    this.#headers = options.headers ?? {};
+    this.#dailyLimit = options.dailyLimit ?? Infinity;
+    this.#clock = options.clock ?? (() => new Date());
   }
 
   async complete(system: string, user: string, { json = false, temperature = 0.2 } = {}): Promise<string> {
+    const today = this.#clock().toISOString().slice(0, 10);
+    if (today !== this.#day) {
+      this.#day = today;
+      this.#used = 0;
+    }
+    if (this.#used >= this.#dailyLimit) throw new Error("Tope diario de llamadas al LLM alcanzado");
+    this.#used++;
     const response = await this.#fetch(`${this.#baseUrl}/chat/completions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.#apiKey}` },
+      headers: { ...this.#headers, "Content-Type": "application/json", Authorization: `Bearer ${this.#apiKey}` },
       body: JSON.stringify({
         model: this.model,
         temperature,
@@ -131,4 +151,28 @@ export class LlmPersona implements Persona {
     }
     return this.#fallback.reply(input);
   }
+}
+
+type Env = Record<string, string | undefined>;
+
+/**
+ * Elige proveedor según el entorno: OPENROUTER_API_KEY, luego OPENAI_API_KEY, y si no hay ninguno, null (reglas).
+ * DAILY_LLM_CALLS (300 por defecto) limita el gasto diario: al agotarse, la demo sigue con las reglas.
+ */
+export function createChat(env: Env = process.env): OpenAIChat | null {
+  const limit = Number(env.DAILY_LLM_CALLS ?? 300);
+  const dailyLimit = Number.isFinite(limit) && limit >= 0 ? limit : 300;
+  if (env.OPENROUTER_API_KEY) {
+    return new OpenAIChat({
+      apiKey: env.OPENROUTER_API_KEY,
+      model: env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+      baseUrl: "https://openrouter.ai/api/v1",
+      headers: { "HTTP-Referer": env.PUBLIC_URL || "https://github.com/xovnss/guvo-academy-demo", "X-Title": "Academia de simulaciones (demo)" },
+      dailyLimit,
+    });
+  }
+  if (env.OPENAI_API_KEY) {
+    return new OpenAIChat({ apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL || undefined, dailyLimit });
+  }
+  return null;
 }

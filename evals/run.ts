@@ -3,7 +3,7 @@ import type { Analyzer } from "../src/engine/analyzer.ts";
 import { RulePersona } from "../src/engine/persona.ts";
 import { buildReport } from "../src/engine/scoring.ts";
 import { startSimulation, step } from "../src/engine/simulation.ts";
-import { LlmAnalyzer, OpenAIChat } from "../src/llm.ts";
+import { createChat, LlmAnalyzer } from "../src/llm.ts";
 import { TfIdfRetriever } from "../src/rag/index.ts";
 import { getScenario } from "../src/scenarios.ts";
 import { CONVERSATIONS } from "./conversations.ts";
@@ -11,10 +11,10 @@ import { LABELED } from "./labeled.ts";
 
 /**
  * Evals del motor. Corren siempre contra el analizador por reglas (determinista, gratis).
- * Con OPENAI_API_KEY evalúan además al analizador con LLM, para comparar ambos con los mismos casos.
+ * Con OPENROUTER_API_KEY u OPENAI_API_KEY evalúan además al analizador con LLM, para comparar ambos con los mismos casos.
  *   npm run eval
  */
-const chat = process.env.OPENAI_API_KEY ? new OpenAIChat({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL || undefined }) : null;
+const chat = createChat(process.env);
 const analyzers: Analyzer[] = [new RuleAnalyzer(), ...(chat ? [new LlmAnalyzer(chat)] : [])];
 const ctx = { scenarioContext: "Clínica dental: paciente molesto por una cita cancelada", lastReply: "¿Por qué nadie me avisó?" };
 

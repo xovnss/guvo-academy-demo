@@ -50,6 +50,8 @@ export interface ServerOptions {
   academy: Academy;
   rateLimit?: { max: number; windowMs: number };
   webDir?: URL;
+  /** URL pública (p. ej. https://mi-demo.vercel.app); aparece en el certificado como enlace de verificación. */
+  publicUrl?: string;
 }
 
 function send(res: ServerResponse, status: number, body: string | Buffer, type: string) {
@@ -85,7 +87,7 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   }
 }
 
-export function createApp({ academy, rateLimit, webDir = new URL("./web/", import.meta.url) }: ServerOptions): Server {
+export function createApp({ academy, rateLimit, publicUrl, webDir = new URL("./web/", import.meta.url) }: ServerOptions): Server {
   const limiter = new RateLimiter(rateLimit?.max ?? 40, rateLimit?.windowMs ?? 60_000);
 
   async function handle(req: IncomingMessage, res: ServerResponse) {
@@ -123,7 +125,9 @@ export function createApp({ academy, rateLimit, webDir = new URL("./web/", impor
       const token = url.searchParams.get("token") ?? "";
       const result = academy.authority.verify(token);
       if (!result.valid) throw new AppError(404, "Certificado no válido.");
-      const verifyUrl = `${url.origin}/?verify=${result.payload.id}`;
+      const host = req.headers.host ?? "";
+      const origin = publicUrl ?? (/^[\w.-]+(:\d+)?$/.test(host) ? `http://${host}` : "");
+      const verifyUrl = origin;
       return send(res, 200, renderCertificateSvg(result.payload, verifyUrl), "image/svg+xml; charset=utf-8");
     }
 

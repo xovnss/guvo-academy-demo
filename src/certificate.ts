@@ -80,9 +80,31 @@ const longDate = (iso: string) => {
   return `${d} de ${MONTHS[(m ?? 1) - 1]} de ${y}`;
 };
 
+/** Parte un texto en líneas de máximo `max` caracteres (sin cortar palabras), para que no se encimen en el SVG. */
+export function wrapLines(text: string, max: number, maxLines = 3): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (current && `${current} ${word}`.length > max) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = current ? `${current} ${word}` : word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, maxLines);
+}
+
 /** Certificado como SVG autocontenido (sin fuentes ni imágenes externas). Todo texto dinámico va escapado. */
 export function renderCertificateSvg(p: CertificatePayload, verifyUrl: string): string {
   const e = escapeXml;
+  const block = (x: number, text: string, caption: string) => {
+    const lines = wrapLines(text, 24);
+    const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : 26}">${e(line)}</tspan>`).join("");
+    return `<text x="${x}" y="596" font-family="system-ui, sans-serif" font-size="21" font-weight="600">${tspans}</text>
+    <text x="${x}" y="${596 + 26 * (lines.length - 1) + 32}" font-family="system-ui, sans-serif" font-size="13" letter-spacing="3" fill="#5b5880">${caption}</text>`;
+  };
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850" role="img" aria-label="Certificado de ${e(p.name)}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eceaff"/></linearGradient>
@@ -99,14 +121,12 @@ export function renderCertificateSvg(p: CertificatePayload, verifyUrl: string): 
     <text x="600" y="385" font-size="68" font-style="italic" fill="#1b1a3a">${e(p.name)}</text>
     <text x="600" y="450" font-size="24" fill="#5b5880">por completar con éxito el curso</text>
     <text x="600" y="505" font-family="system-ui, sans-serif" font-size="34" font-weight="700">${e(p.course)}</text>
-    <text x="300" y="620" font-family="system-ui, sans-serif" font-size="54" font-weight="700" fill="#3b2fd9">${p.score}/100</text>
-    <text x="300" y="652" font-family="system-ui, sans-serif" font-size="16" letter-spacing="3" fill="#5b5880">SCORE FINAL</text>
-    <text x="600" y="606" font-family="system-ui, sans-serif" font-size="22" font-weight="600">${e(p.superpower)}</text>
-    <text x="600" y="636" font-family="system-ui, sans-serif" font-size="14" letter-spacing="3" fill="#5b5880">SUPERPODER</text>
-    <text x="900" y="606" font-family="system-ui, sans-serif" font-size="22" font-weight="600">${e(p.improvement)}</text>
-    <text x="900" y="636" font-family="system-ui, sans-serif" font-size="14" letter-spacing="3" fill="#5b5880">ÁREA DE MEJORA</text>
+    <text x="280" y="620" font-family="system-ui, sans-serif" font-size="54" font-weight="700" fill="#3b2fd9">${p.score}/100</text>
+    <text x="280" y="652" font-family="system-ui, sans-serif" font-size="16" letter-spacing="3" fill="#5b5880">SCORE FINAL</text>
+    ${block(600, p.superpower, "SUPERPODER")}
+    ${block(920, p.improvement, "ÁREA DE MEJORA")}
     <text x="600" y="730" font-family="system-ui, sans-serif" font-size="18" fill="#5b5880">Emitido el ${e(longDate(p.issued))} · ${e(p.id)}</text>
-    <text x="600" y="765" font-family="system-ui, sans-serif" font-size="15" fill="#3b2fd9">Verifica este certificado en ${e(verifyUrl)}</text>
+    <text x="600" y="765" font-family="system-ui, sans-serif" font-size="15" fill="#3b2fd9">Certificado con firma digital · verificable en ${e(verifyUrl || "la plataforma que lo emitió")}</text>
   </g>
 </svg>`;
 }

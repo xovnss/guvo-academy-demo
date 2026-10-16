@@ -4,12 +4,15 @@ Motor de **simulaciones de capacitación con IA**: la persona practica una conve
 
 Es la versión de código abierto y con datos ficticios de las ideas detrás de [Guvo Academy](https://www.guvo.mx), plataforma de capacitación corporativa con IA que cofundé. Aquí no hay código de producción ni datos de clientes: es un motor autocontenido, probado y evaluado.
 
+![Simulación con termómetro emocional, criterios en vivo y pista IA](docs/captura-simulacion.png)
+![Resultado con score, momentos clave y certificado verificable](docs/captura-resultado.png)
+
 ```bash
 node --version   # 22.6 o superior
 npm start        # http://127.0.0.1:3000
 ```
 
-Sin dependencias de ejecución ni claves: por defecto evalúa con reglas en español. Con `OPENAI_API_KEY` usa un LLM para evaluar y para dar voz al interlocutor, con respaldo automático a las reglas.
+Sin dependencias de ejecución ni claves: por defecto evalúa con reglas en español. Con `OPENROUTER_API_KEY` (o `OPENAI_API_KEY`) usa un LLM para evaluar y para dar voz al interlocutor, con respaldo automático a las reglas. `DAILY_LLM_CALLS` (300 por defecto) limita el gasto diario: al agotarse, la demo sigue con las reglas en lugar de fallar.
 
 ## Qué hace
 
@@ -56,7 +59,7 @@ El flujo de cada mensaje: **analizar → sanear → mover el termómetro → res
 ## Pruebas y evals
 
 ```bash
-npm test         # 59 pruebas
+npm test         # 64 pruebas
 npm run eval     # evals con casos etiquetados y conversaciones de referencia
 npm run typecheck
 ```

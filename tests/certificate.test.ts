@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CertificateAuthority, cleanName, escapeXml, renderCertificateSvg } from "../src/certificate.ts";
+import { CertificateAuthority, cleanName, escapeXml, renderCertificateSvg, wrapLines } from "../src/certificate.ts";
 
 const base = { name: "Ana Pérez", course: "Manejo de clientes difíciles", score: 82, superpower: "Empatía", improvement: "Cierre" };
 const NOW = new Date("2026-10-15T18:00:00Z");
@@ -58,5 +58,24 @@ describe("certificados", () => {
       assert.ok(svg.includes("&lt;script&gt;"));
     }
     assert.equal(escapeXml(`<>&"'`), "&lt;&gt;&amp;&quot;&apos;");
+  });
+
+  it("parte textos largos en líneas sin cortar palabras y sin pasar de 3 líneas", () => {
+    assert.deepEqual(wrapLines("Claridad en la propuesta de solución", 24), ["Claridad en la propuesta", "de solución"]);
+    assert.deepEqual(wrapLines("corto", 24), ["corto"]);
+    assert.ok(wrapLines("palabra ".repeat(40), 24).length <= 3);
+    assert.deepEqual(wrapLines("", 24), []);
+  });
+
+  it("el SVG pone el superpoder y el área de mejora en bloques separados (sin encimarse)", () => {
+    const token = ca.issue({ ...base, superpower: "Empatía y validación emocional", improvement: "Claridad en la propuesta de solución" }, NOW);
+    const r = ca.verify(token);
+    assert.ok(r.valid);
+    if (r.valid) {
+      const svg = renderCertificateSvg(r.payload, "");
+      assert.match(svg, /<tspan x="600"[^>]*>Empatía y validación<\/tspan>/);
+      assert.match(svg, /<tspan x="920"[^>]*>Claridad en la propuesta<\/tspan>/);
+      assert.match(svg, /la plataforma que lo emitió/);
+    }
   });
 });
